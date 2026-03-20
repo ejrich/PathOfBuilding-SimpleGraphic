@@ -12,12 +12,12 @@ if (DEFINED VCPKG_INSTALLED_DIR AND DEFINED VCPKG_TARGET_TRIPLET)
         PATH_SUFFIXES luajit luajit-2.1 luajit-2.0
         NO_DEFAULT_PATH)
 
-    find_library(LuaJIT_LIBRARY_RELEASE NAMES lua51luajit-5.1
+    find_library(LuaJIT_LIBRARY_RELEASE NAMES lua51 luajit-5.1
         PATHS ${LuaJIT_SEARCH_ROOT}
         PATH_SUFFIXES lib
         NO_DEFAULT_PATH)
 
-    find_library(LuaJIT_LIBRARY_DEBUG NAMES lua51luajit-5.1
+    find_library(LuaJIT_LIBRARY_DEBUG NAMES lua51 luajit-5.1
         PATHS ${LuaJIT_SEARCH_ROOT}
         PATH_SUFFIXES debug/lib
         NO_DEFAULT_PATH)

@@ -12,7 +12,9 @@
 #include "ui.h"
 
 #define SOL_ALL_SAFETIES_ON 1
-#define SOL_USING_CXX_LUAJIT 1
+#ifdef _WIN32
+    #define SOL_USING_CXX_LUAJIT 1
+#endif
 #include <sol/sol.hpp>
 
 #include "ui_console.h"

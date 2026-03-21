@@ -1032,7 +1032,7 @@ void r_renderer_c::Init(r_featureFlag_e features)
 		}
 		glGenFramebuffers(1, &rtt.framebuffer);
 		glGenTextures(1, &rtt.colorTexture);
-		
+
 		if (i == 0) {
 			auto compileShader = [](std::string_view src, GLenum type) -> GLuint {
 				GLuint id = glCreateShader(type);
@@ -1509,7 +1509,7 @@ void r_renderer_c::EndFrame()
 
 	std::chrono::time_point endFrameToc = std::chrono::steady_clock::now();
 	frameStats.AppendDuration(&FrameStats::endFrameStepDurations, endFrameToc - endFrameTic);
-	
+
 	if (showTiming) {
 		if (ImGui::Begin("Timing")) {
 			auto stepStatsUi = [&](std::string label, auto& seq) {
@@ -1640,7 +1640,11 @@ void r_renderer_c::GetShaderImageSize(r_shaderHnd_c* hnd, int& width, int& heigh
 	if (hnd)
 	{
 		while (hnd->sh->tex->status < r_tex_c::SIZE_KNOWN) {
+#if _WIN32
 			Sleep(1);
+#elif __linux__
+			sleep(1);
+#endif
 		}
 		width = hnd->sh->tex->fileWidth;
 		height = hnd->sh->tex->fileHeight;

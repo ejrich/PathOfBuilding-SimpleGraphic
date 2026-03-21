@@ -14,7 +14,9 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-include(${PROJECT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+if (WIN32)
+    include(${PROJECT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake)
+endif ()
 
 set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION ".")
 include(InstallRequiredSystemLibraries)
@@ -116,16 +118,19 @@ target_include_directories(SimpleGraphic
     "${CMAKE_CURRENT_SOURCE_DIR}/engine"
 )
 
-find_package(unofficial-angle CONFIG REQUIRED)
-find_package(CURL CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
-find_package(glfw3 CONFIG REQUIRED)
-find_package(gli CONFIG REQUIRED)
+if (WIN32)
+    find_package(unofficial-angle CONFIG REQUIRED)
+    find_package(CURL CONFIG REQUIRED)
+    find_package(fmt CONFIG REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
+    find_package(gli CONFIG REQUIRED)
+    find_package(Microsoft.GSL CONFIG REQUIRED)
+    find_package(re2 CONFIG REQUIRED)
+    find_package(sol2 CONFIG REQUIRED)
+endif ()
+
 find_package(LuaJIT REQUIRED)
-find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
-find_package(re2 CONFIG REQUIRED)
-find_package(sol2 CONFIG REQUIRED)
 find_package(Threads REQUIRED)
 find_package(zstd REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -146,6 +151,8 @@ target_include_directories(cmp_core PUBLIC
     dep/compressonator/cmp_core/shaders
     dep/compressonator/cmp_core/source
 )
+
+set_target_properties(cmp_core PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
 
 add_library(imgui STATIC
     dep/imgui/imconfig.h
@@ -178,10 +185,19 @@ target_include_directories(imgui PUBLIC
     dep/imgui/misc/cpp
 )
 
-target_link_libraries(imgui PUBLIC
-    unofficial::angle::libGLESv2
-    glfw
-)
+set_target_properties(imgui PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+
+if (WIN32)
+    target_link_libraries(imgui PUBLIC
+        unofficial::angle::libGLESv2
+        glfw
+    )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(imgui PUBLIC
+        GLESv2
+        glfw
+    )
+endif ()
 
 target_include_directories(SimpleGraphic
     PRIVATE
@@ -224,24 +240,43 @@ if (APPLE)
     )
 endif ()
 
-target_link_libraries(SimpleGraphic
-    PRIVATE
-    unofficial::angle::libEGL
-    unofficial::angle::libGLESv2
-    cmp_core
-    fmt::fmt
-    glfw
-    gli
-    glm::glm
-    imgui
-    LuaJIT::LuaJIT
-    Microsoft.GSL::GSL
-    re2::re2
-    Threads::Threads
-    WebP::webpdecoder
-    ZLIB::ZLIB
-    zstd::libzstd_shared
-)
+if (WIN32)
+    target_link_libraries(SimpleGraphic
+        PRIVATE
+        unofficial::angle::libEGL
+        unofficial::angle::libGLESv2
+        cmp_core
+        fmt::fmt
+        glfw
+        gli
+        glm::glm
+        imgui
+        LuaJIT::LuaJIT
+        Microsoft.GSL::GSL
+        re2::re2
+        Threads::Threads
+        WebP::webpdecoder
+        ZLIB::ZLIB
+        zstd::libzstd_shared
+    )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(SimpleGraphic
+        PUBLIC
+        EGL
+        GLESv2
+        cmp_core
+        fmt
+        glfw
+        glm::glm
+        imgui
+        luajit-5.1
+        re2
+        Threads::Threads
+        WebP::webpdecoder
+        ZLIB::ZLIB
+        zstd::libzstd_shared
+    )
+endif ()
 
 install(FILES $<TARGET_RUNTIME_DLLS:SimpleGraphic> DESTINATION ".")
 install(TARGETS SimpleGraphic RUNTIME DESTINATION ".")
@@ -277,94 +312,96 @@ if (WIN32)
 endif ()
 
 
+if (WIN32)
 # lcurl module
 
-set(LCURL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/Lua-cURLv3)
-file(GLOB LCURL_SOURCES ${LCURL_SOURCE_DIR}/src/**.c)
-add_library(lcurl SHARED ${LCURL_SOURCES})
+    set(LCURL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/Lua-cURLv3)
+    file(GLOB LCURL_SOURCES ${LCURL_SOURCE_DIR}/src/**.c)
+    add_library(lcurl SHARED ${LCURL_SOURCES})
 
-target_include_directories(lcurl
-    PRIVATE
-    ${LCURL_SOURCE_DIR}/src
-)
+    target_include_directories(lcurl
+        PRIVATE
+        ${LCURL_SOURCE_DIR}/src
+    )
 
-target_link_libraries(lcurl
-    PRIVATE
-    CURL::libcurl
-    LuaJIT::LuaJIT
-)
+    target_link_libraries(lcurl
+        PRIVATE
+        CURL::libcurl
+        LuaJIT::LuaJIT
+    )
 
-install(TARGETS lcurl RUNTIME DESTINATION ".")
-install(FILES $<TARGET_RUNTIME_DLLS:lcurl> DESTINATION ".")
+    install(TARGETS lcurl RUNTIME DESTINATION ".")
+    install(FILES $<TARGET_RUNTIME_DLLS:lcurl> DESTINATION ".")
 
 # luautf8 module
 
-add_library(lua-utf8 SHARED libs/luautf8/lutf8lib.c)
+    add_library(lua-utf8 SHARED libs/luautf8/lutf8lib.c)
 
-target_compile_definitions(lua-utf8
-    PRIVATE
-    LUA_BUILD_AS_DLL
-)
+    target_compile_definitions(lua-utf8
+        PRIVATE
+        LUA_BUILD_AS_DLL
+    )
 
-target_include_directories(lua-utf8
-    PRIVATE
-)
+    target_include_directories(lua-utf8
+        PRIVATE
+    )
 
-target_link_libraries(lua-utf8
-    PRIVATE
-    LuaJIT::LuaJIT
-)
+    target_link_libraries(lua-utf8
+        PRIVATE
+        LuaJIT::LuaJIT
+    )
 
-install(TARGETS lua-utf8 RUNTIME DESTINATION ".")
-install(FILES $<TARGET_RUNTIME_DLLS:lua-utf8> DESTINATION ".")
+    install(TARGETS lua-utf8 RUNTIME DESTINATION ".")
+    install(FILES $<TARGET_RUNTIME_DLLS:lua-utf8> DESTINATION ".")
 
 # luasocket module
 
-add_library(luasocket SHARED
-   "libs/luasocket/src/auxiliar.c"
-   "libs/luasocket/src/buffer.c"
-   "libs/luasocket/src/compat.c"
-   "libs/luasocket/src/except.c"
-   "libs/luasocket/src/inet.c"
-   "libs/luasocket/src/io.c"
-   "libs/luasocket/src/luasocket.c"
-   "libs/luasocket/src/options.c"
-   "libs/luasocket/src/select.c"
-   "libs/luasocket/src/tcp.c"
-   "libs/luasocket/src/timeout.c"
-   "libs/luasocket/src/udp.c"
-   "libs/luasocket/src/wsocket.c"
-)
+    add_library(luasocket SHARED
+       "libs/luasocket/src/auxiliar.c"
+       "libs/luasocket/src/buffer.c"
+       "libs/luasocket/src/compat.c"
+       "libs/luasocket/src/except.c"
+       "libs/luasocket/src/inet.c"
+       "libs/luasocket/src/io.c"
+       "libs/luasocket/src/luasocket.c"
+       "libs/luasocket/src/options.c"
+       "libs/luasocket/src/select.c"
+       "libs/luasocket/src/tcp.c"
+       "libs/luasocket/src/timeout.c"
+       "libs/luasocket/src/udp.c"
+       "libs/luasocket/src/wsocket.c"
+    )
 
-target_include_directories(luasocket
-    PRIVATE
-    ${LSOCKET_SOURCE_DIR}/src
-)
+    target_include_directories(luasocket
+        PRIVATE
+        ${LSOCKET_SOURCE_DIR}/src
+    )
 
-target_link_libraries(luasocket
-    PRIVATE
-    LuaJIT::LuaJIT
-    wsock32
-    ws2_32
-)
+    target_link_libraries(luasocket
+        PRIVATE
+        LuaJIT::LuaJIT
+        wsock32
+        ws2_32
+    )
 
-set_target_properties( luasocket PROPERTIES OUTPUT_NAME "socket" ) 
-install(TARGETS luasocket RUNTIME DESTINATION ".")
-install(FILES $<TARGET_RUNTIME_DLLS:luasocket> DESTINATION ".")
+    set_target_properties( luasocket PROPERTIES OUTPUT_NAME "socket" )
+    install(TARGETS luasocket RUNTIME DESTINATION ".")
+    install(FILES $<TARGET_RUNTIME_DLLS:luasocket> DESTINATION ".")
 
 # lzip module
 
-add_library(lzip SHARED libs/LZip/lzip.cpp)
+    add_library(lzip SHARED libs/LZip/lzip.cpp)
 
-target_include_directories(lzip
-    PRIVATE
-)
+    target_include_directories(lzip
+        PRIVATE
+    )
 
-target_link_libraries(lzip
-    PRIVATE
-    LuaJIT::LuaJIT
-    ZLIB::ZLIB
-)
+    target_link_libraries(lzip
+        PRIVATE
+        LuaJIT::LuaJIT
+        ZLIB::ZLIB
+    )
 
-install(TARGETS lzip RUNTIME DESTINATION ".")
-install(FILES $<TARGET_RUNTIME_DLLS:lzip> DESTINATION ".")
+    install(TARGETS lzip RUNTIME DESTINATION ".")
+    install(FILES $<TARGET_RUNTIME_DLLS:lzip> DESTINATION ".")
+endif ()

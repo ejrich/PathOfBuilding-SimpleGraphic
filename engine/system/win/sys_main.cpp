@@ -86,7 +86,7 @@ unsigned long thread_c::statThreadProc(void* obj)
 		}
 #endif
 		// Run thread procedure
-		thread->ThreadProc();	
+		thread->ThreadProc();
 	}
 #ifdef _WIN32
 	catch (EXCEPTION_POINTERS* exPtr) {
@@ -95,7 +95,7 @@ unsigned long thread_c::statThreadProc(void* obj)
 		DWORD code =  exRec->ExceptionCode;
 		char detail[512];
 		if (code == EXCEPTION_ACCESS_VIOLATION && exRec->NumberParameters == 2) {
-			sprintf_s(detail, 512, "Access violation: attempted to %s address %08Xh", 
+			sprintf_s(detail, 512, "Access violation: attempted to %s address %08Xh",
 				exRec->ExceptionInformation[0]? "write to":"read from", static_cast<int>(exRec->ExceptionInformation[1]));
 		} else if (code == EXCEPTION_STACK_OVERFLOW) {
 			strcpy_s(detail, 512, "Stack overflow");
@@ -254,7 +254,7 @@ static int ImGui_ImplGlfw_TranslateUntranslatedKey(int key, int scancode)
 #if GLFW_HAS_GET_KEY_NAME
 	// GLFW 3.1+ attempts to "untranslate" keys, which goes the opposite of what every other framework does, making using lettered shortcuts difficult.
 	// (It had reasons to do so: namely GLFW is/was more likely to be used for WASD-type game controls rather than lettered shortcuts, but IHMO the 3.1 change could have been done differently)
-	// See https://github.com/glfw/glfw/issues/1502 for details.  
+	// See https://github.com/glfw/glfw/issues/1502 for details.
 	// Adding a workaround to undo this (so our keys are translated->untranslated->translated, likely a lossy process).
 	// This won't cover edge cases but this is at least going to cover common cases.
 	if (key >= GLFW_KEY_KP_0 && key <= GLFW_KEY_KP_EQUAL)
@@ -428,6 +428,23 @@ void sys_main_c::SpawnProcess(std::filesystem::path cmdName, const char* argList
 		ShellExecuteExW(&sinfo);
 	}
 	FreeWideString(wideArgs);
+#elif __linux__
+    int pid = fork();
+    if (pid == 0) {
+        std::vector<char*> args;
+        if (argList) {
+            std::istringstream argStream(argList);
+            std::string arg;
+            while (std::getline(argStream, arg, ' ')) {
+                if (arg.length()) {
+                    args.push_back((char*)arg.c_str());
+                }
+            }
+        }
+
+        execvp(cmdName.string().c_str(), args.data());
+        exit(-1);
+    }
 #else
 #warning LV: Subprocesses not implemented on this OS.
 	// TODO(LV): Implement subprocesses for other OSes.
@@ -496,7 +513,7 @@ void sys_main_c::Error(const char *fmt, ...)
 {
 	if (errorRaised) return;
 	errorRaised = true;
-	
+
 	if (initialised) {
 		video->SetVisible(false);
 		conWin->SetVisible(true);
@@ -693,13 +710,13 @@ bool sys_main_c::Run(int argc, char** argv)
 		core->Shutdown();
 	}
 #ifdef _WIN32
-	catch (EXCEPTION_POINTERS* exPtr) { 
+	catch (EXCEPTION_POINTERS* exPtr) {
 		// C exception
 		PEXCEPTION_RECORD exRec = exPtr->ExceptionRecord;
 		DWORD code =  exRec->ExceptionCode;
 		char detail[512];
 		if (code == EXCEPTION_ACCESS_VIOLATION && exRec->NumberParameters == 2) {
-			sprintf_s(detail, 512, "Access violation: attempted to %s address %08Xh", 
+			sprintf_s(detail, 512, "Access violation: attempted to %s address %08Xh",
 				exRec->ExceptionInformation[0]? "write to":"read from", static_cast<int>(exRec->ExceptionInformation[1]));
 		} else if (code == EXCEPTION_STACK_OVERFLOW) {
 			strcpy_s(detail, 512, "Stack overflow");
@@ -726,7 +743,7 @@ bool sys_main_c::Run(int argc, char** argv)
 		while (exitFlag == false) {
 			Sleep(50);
 		}
-	}	
+	}
 
 	initialised = false;
 

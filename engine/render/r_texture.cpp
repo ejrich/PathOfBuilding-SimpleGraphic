@@ -7,6 +7,8 @@
 #include <mutex>
 #include <vector>
 #include <atomic>
+#include <thread>
+#include <algorithm>
 #include "r_local.h"
 
 #include "cmp_core.h"
@@ -18,7 +20,7 @@
 // Predefined textures
 // ===================
 
-static const byte t_whiteImage[64] = { 
+static const byte t_whiteImage[64] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -177,7 +179,7 @@ bool t_manager_c::AsyncRemove(r_tex_c* tex)
 	if (tex->status == r_tex_c::PENDING_UPLOAD) {
 		RemovePendingTextureUpload(tex);
 	}
-	
+
 	return true;
 }
 
@@ -219,7 +221,7 @@ void t_manager_c::ThreadProc()
 				doTex->status = r_tex_c::PROCESSING;
 			}
 		}
-	
+
 		if (doTex != nullptr) {
 			// Load this texture
 			doTex->LoadFile();
@@ -266,7 +268,7 @@ static void T_ResampleImage(byte* in, dword in_w, dword in_h, int in_comp, byte*
 
 	double xst = (double)in_w / out_w;
 	double yst = (double)in_h / out_h;
-		
+
 	double dy = 0;
 	for (dword y = 0; y < out_h; y++, dy+= yst) {
 		// Generate Y indicies
@@ -278,13 +280,13 @@ static void T_ResampleImage(byte* in, dword in_w, dword in_h, int in_comp, byte*
 
 			// Resample each component
 			for (int c = 0; c < in_comp; c++) {
-				out[in_comp * (y*out_w + x) + c] = 
+				out[in_comp * (y*out_w + x) + c] =
 					(byte)
 					(
-						(double)in[in_comp * (siy.i1 * six.max + six.i1) + c] * six.w1 * siy.w1 + 
+						(double)in[in_comp * (siy.i1 * six.max + six.i1) + c] * six.w1 * siy.w1 +
 						(double)in[in_comp * (siy.i2 * six.max + six.i1) + c] * six.w1 * siy.w2 +
-						(double)in[in_comp * (siy.i1 * six.max + six.i2) + c] * six.w2 * siy.w1 + 
-						(double)in[in_comp * (siy.i2 * six.max + six.i2) + c] * six.w2 * siy.w2 
+						(double)in[in_comp * (siy.i1 * six.max + six.i2) + c] * six.w2 * siy.w1 +
+						(double)in[in_comp * (siy.i2 * six.max + six.i2) + c] * six.w2 * siy.w2
 					);
 			}
 		}
@@ -352,7 +354,7 @@ void r_tex_c::Unbind()
 }
 
 void r_tex_c::Enable()
-{	
+{
 	glEnable(GL_TEXTURE_2D);
 }
 
@@ -504,7 +506,7 @@ static gli::texture2d_array TranscodeTexture(gli::texture2d_array src, gli::form
 
 			for (size_t blockRow = 0; blockRow < srcBlocksPerRow; ++blockRow) {
 				const size_t rowBase = blockRow * srcBlockSize.y;
-				const size_t rowsLeft = (std::min)(4ull, dstExtent.y - rowBase);
+				const size_t rowsLeft = (std::min)((size_t)4, dstExtent.y - rowBase);
 
 				for (size_t blockCol = 0; blockCol < srcBlocksPerColumn; ++blockCol) {
 					// Read source 4x4 texel block, no branching needed.
@@ -524,7 +526,7 @@ static gli::texture2d_array TranscodeTexture(gli::texture2d_array src, gli::form
 
 						// Here we work off that dstData points at the top left pixel of the block row in the destination.
 						const size_t colBase = blockCol * srcBlockSize.x;
-						const size_t colsLeft = (std::min)(4ull, dstExtent.x - colBase);
+						const size_t colsLeft = (std::min)((size_t)4, dstExtent.x - colBase);
 						const size_t colBytesLeft = colsLeft * 4;
 						for (size_t innerRow = 0; innerRow < rowsLeft; ++innerRow) {
 							auto* dstPtr = dstData + dstRowStride * innerRow + colBase * 4;

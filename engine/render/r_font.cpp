@@ -11,6 +11,7 @@
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 // =======
 // Classes

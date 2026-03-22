@@ -20,6 +20,10 @@
 #include <imgui.h>
 #include <stb_image_resize.h>
 
+#ifdef __linux__
+    #include <X11/Xlib.h>
+#endif
+
 // ====================
 // sys_IVideo Interface
 // ====================
@@ -115,6 +119,8 @@ sys_video_c::sys_video_c(sys_IMain* sysHnd)
 		platformType = GLFW_ANGLE_PLATFORM_TYPE_D3D11;
 	else // Native Windows
 		platformType = GLFW_ANGLE_PLATFORM_TYPE_D3D11;
+#elif __linux__
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 #endif
 	glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, platformType);
 	glfwInit();
@@ -134,6 +140,14 @@ std::optional<std::pair<double, double>> PlatformGetCursorPos() {
 	POINT curPos;
 	GetCursorPos(&curPos);
 	return std::make_pair((double)curPos.x, (double)curPos.y);
+#elif __linux__
+    Display *display = XOpenDisplay(nullptr);
+    Window root = DefaultRootWindow(display);
+    Window window;
+    int rootX, rootY, winX, winY;
+    unsigned int mask;
+    XQueryPointer(display, root, &window, &window, &rootX, &rootY, &winX, &winY, &mask);
+	return std::make_pair((double)rootX, (double)rootY);
 #else
 	#warning LV : Global cursor position queries not implemented yet on this OS.
 		// TODO(LV): Implement on other OSes
@@ -422,7 +436,7 @@ int sys_video_c::Apply(sys_vidSet_s* set)
 			if (!intersectedMonitor && intersectsDisplay) {
 				intersectedMonitor = m;
 				break;
-			}	
+			}
 		}
 	}
 

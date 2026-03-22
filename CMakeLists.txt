@@ -275,6 +275,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
         WebP::webpdecoder
         ZLIB::ZLIB
         zstd::libzstd_shared
+        X11
     )
 endif ()
 

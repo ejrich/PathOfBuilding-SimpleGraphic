@@ -484,6 +484,11 @@ const char* PlatformOpenURL(const char* url)
 		return AllocString("Did not open URL, length likely too long for the OS.");
 	ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWDEFAULT);
 	return nullptr;
+#elif __linux__
+    std::string command = "xdg-open ";
+    command += url;
+    system(command.c_str());
+    return nullptr;
 #else
 #warning LV: URL opening not implemented on this OS.
 	// TODO(LV): Implement URL opening for other OSes.

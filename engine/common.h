@@ -481,7 +481,7 @@ T clamp(T &v, T l, T u)
 
 int		IsColorEscape(char const* str);
 int		IsColorEscape(std::u32string_view str);
-void	ReadColorEscape(char const* str, col3_t out);
+void	ReadColorEscape(char const* str, int len, col3_t out);
 std::u32string_view ReadColorEscape(std::u32string_view str, col3_t out);
 
 char*	_AllocString(const char* str, const char* file, int line);

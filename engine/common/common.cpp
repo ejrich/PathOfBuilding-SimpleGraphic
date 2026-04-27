@@ -247,22 +247,29 @@ int IsColorEscape(std::u32string_view str)
 	return 0;
 }
 
-void ReadColorEscape(const char* str, col3_t out)
+static int HexCharToInt(char c) {
+	if (c >= 'a') return c - 'a' + 10;
+	if (c >= 'A') return c - 'A' + 10;
+	return c - '0';
+}
+
+void ReadColorEscape(const char* str, int len, col3_t out)
 {
-	int len = IsColorEscape(str);
 	switch (len) {
 	case 2:
 		VectorCopy(colorEscape[str[1] - '0'], out);
 		break;
 	case 8:
-	{
-		int xr, xg, xb;
-		sscanf(str + 2, "%2x%2x%2x", &xr, &xg, &xb);
-		out[0] = xr / 255.0f;
-		out[1] = xg / 255.0f;
-		out[2] = xb / 255.0f;
-	}
-	break;
+		{
+			int xr = (HexCharToInt(str[2]) << 4) | HexCharToInt(str[3]);
+			int xg = (HexCharToInt(str[4]) << 4) | HexCharToInt(str[5]);
+			int xb = (HexCharToInt(str[6]) << 4) | HexCharToInt(str[7]);
+
+			out[0] = xr / 255.0f;
+			out[1] = xg / 255.0f;
+			out[2] = xb / 255.0f;
+		}
+		break;
 	}
 }
 

@@ -162,7 +162,7 @@ static int l_##Name(lua_State* L) {                                \
 			lua_pushfstring(L, "C++ exception:\n%s", e.what()); \
 			return -1;                                          \
 		}                                                       \
-    };                                                          \
+	};                                                          \
 	int rc = fun(L);                                            \
 	if (rc < 0) { LuaErrorWrapper(L); }                         \
 	return rc; }
@@ -832,19 +832,29 @@ static int l_SetDrawColor(lua_State* L)
 	ui->LAssert(L, n >= 1, "Usage: SetDrawColor(red, green, blue[, alpha]) or SetDrawColor(escapeStr)");
 	col4_t color;
 	if (lua_type(L, 1) == LUA_TSTRING) {
-		ui->LAssert(L, IsColorEscape(lua_tostring(L, 1)), "SetDrawColor() argument 1: invalid color escape sequence");
-		ReadColorEscape(lua_tostring(L, 1), color);
+		const char *str = lua_tostring(L, 1);
+		int len = IsColorEscape(str);
+		ui->LAssert(L, len, "SetDrawColor() argument 1: invalid color escape sequence");
+		ReadColorEscape(str, len, color);
 		color[3] = 1.0;
 	}
 	else {
 		ui->LAssert(L, n >= 3, "Usage: SetDrawColor(red, green, blue[, alpha]) or SetDrawColor(escapeStr)");
 		for (int i = 1; i <= 3; i++) {
-			ui->LAssert(L, lua_isnumber(L, i), "SetDrawColor() argument %d: expected number, got %s", i, luaL_typename(L, i));
-			color[i - 1] = (float)lua_tonumber(L, i);
+			int isnum;
+			lua_Number val = lua_tonumberx(L, i, &isnum);
+			if (!isnum) {
+				ui->LAssert(L, false, "SetDrawColor() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			}
+			color[i - 1] = (float)val;
 		}
 		if (n >= 4 && !lua_isnil(L, 4)) {
-			ui->LAssert(L, lua_isnumber(L, 4), "SetDrawColor() argument 4: expected number or nil, got %s", luaL_typename(L, 4));
-			color[3] = (float)lua_tonumber(L, 4);
+			int isnum;
+			lua_Number val = lua_tonumberx(L, 4, &isnum);
+			if (!isnum) {
+				ui->LAssert(L, false, "SetDrawColor() argument 4: expected number or nil, got %s", luaL_typename(L, 4));
+			}
+			color[3] = (float)val;
 		}
 		else {
 			color[3] = 1.0;
@@ -884,7 +894,11 @@ static int l_DrawImage(lua_State* L)
 	int n = lua_gettop(L);
 	const char* usage = "Usage: DrawImage({imgHandle|nil}, left, top, width, height[, tcLeft, tcTop, tcRight, tcBottom][, stackIdx[, mask]])";
 	ui->LAssert(L, n >= 5, usage);
-	ui->LAssert(L, lua_isnil(L, 1) || ui->IsUserData(L, 1, "uiimghandlemeta"), "DrawImage() argument 1: expected image handle or nil, got %s", luaL_typename(L, 1));
+
+	if (!lua_isnil(L, 1) && !ui->IsUserData(L, 1, "uiimghandlemeta")) {
+		ui->LAssert(L, false, "DrawImage() argument 1: expected image handle or nil, got %s", luaL_typename(L, 1));
+	}
+
 	r_shaderHnd_c* hnd = NULL;
 	glm::vec2 xys[2]{}, uvs[2]{};
 	int stackLayer = 0;
@@ -897,7 +911,7 @@ static int l_DrawImage(lua_State* L)
 	// | 9  | X | X       | X   |       |      |
 	// | 10 | X | X       | X   | X     |      |
 	// | 11 | X | X       | X   | X     | X    |
-	
+
 	enum ArgFlag : uint8_t { AF_IMG = 0x1, AF_XY = 0x2, AF_UV = 0x4, AF_STACK = 0x8, AF_MASK = 0x10 };
 	ArgFlag af{};
 	switch (n) {
@@ -919,22 +933,32 @@ static int l_DrawImage(lua_State* L)
 		}
 		k += 1;
 	}
-	
+
 	if (af & AF_XY) {
 		const float dpiScale = ui->renderer->VirtualScreenScaleFactor();
 		for (int i = k; i < k + 4; i++) {
-			ui->LAssert(L, lua_isnumber(L, i), "DrawImage() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			int isNum;
+			lua_Number val = lua_tonumberx(L, i, &isNum);
+
+			if (!isNum) {
+				ui->LAssert(L, false, "DrawImage() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			}
 			const int idx = i - k;
-			xys[idx/2][idx%2] = (float)lua_tonumber(L, i) * dpiScale;
+			xys[idx/2][idx%2] = (float)val * dpiScale;
 		}
 		k += 4;
 	}
 
 	if (af & AF_UV) {
 		for (int i = k; i < k + 4; i++) {
-			ui->LAssert(L, lua_isnumber(L, i), "DrawImage() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			int isNum;
+			lua_Number val = lua_tonumberx(L, i, &isNum);
+
+			if (!isNum) {
+				ui->LAssert(L, false, "DrawImage() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			}
 			int idx = i - k;
-			uvs[idx/2][idx%2] = (float)lua_tonumber(L, i);
+			uvs[idx/2][idx%2] = (float)val;
 		}
 		k += 4;
 	}
@@ -948,8 +972,12 @@ static int l_DrawImage(lua_State* L)
 		maxStackValue = hnd->StackCount();
 
 	if (af & AF_STACK) {
-		ui->LAssert(L, lua_isinteger(L, k), "DrawImage() argument %d: expected integer, got %s", k, luaL_typename(L, k));
-		const int val = (int)lua_tointeger(L, k);
+		int isInt;
+		int val = (int)lua_tointegerx(L, k, &isInt);
+
+		if (!isInt) {
+			ui->LAssert(L, false, "DrawImage() argument %d: expected integer, got %s", k, luaL_typename(L, k));
+		}
 		ui->LAssert(L, val > 0, "DrawImage() argument %d: expected positive integer, got %d", k, val);
 		if (maxStackValue.has_value())
 			ui->LAssert(L, val <= *maxStackValue, "DrawImage() argument %d: expected valid stack index <= %d, got %d", k, *maxStackValue, val);
@@ -958,9 +986,13 @@ static int l_DrawImage(lua_State* L)
 	}
 
 	if (af & AF_MASK) {
-		ui->LAssert(L, lua_isnil(L, k) || lua_isinteger(L, k), "DrawImage() argument %d: expected integer or nil, got %s", k, luaL_typename(L, k));
-		if (lua_isinteger(L, k)) {
-			const int val = (int)lua_tointeger(L, k);
+		if (!lua_isnil(L, k)) {
+			int isInt;
+			int val = (int)lua_tointegerx(L, k, &isInt);
+
+			if (!isInt) {
+				ui->LAssert(L, false, "DrawImage() argument %d: expected integer or nil, got %s", k, luaL_typename(L, k));
+			}
 			ui->LAssert(L, val > 0, "DrawImage() argument %d: expected positive integer, got %d", k, val);
 			if (maxStackValue.has_value())
 				ui->LAssert(L, val <= *maxStackValue, "DrawImage() argument %d: expected valid stack index <= %d, got %d", k, *maxStackValue, val);
@@ -982,7 +1014,9 @@ static int l_DrawImageQuad(lua_State* L)
 	int n = lua_gettop(L);
 	const char* usage = "Usage: DrawImageQuad({imgHandle|nil}, x1, y1, x2, y2, x3, y3, x4, y4[, s1, t1, s2, t2, s3, t3, s4, t4][, stackIdx[, mask]])";
 	ui->LAssert(L, n >= 9, usage);
-	ui->LAssert(L, lua_isnil(L, 1) || ui->IsUserData(L, 1, "uiimghandlemeta"), "DrawImageQuad() argument 1: expected image handle or nil, got %s", luaL_typename(L, 1));
+	if (!lua_isnil(L, 1) && ! ui->IsUserData(L, 1, "uiimghandlemeta")) {
+		ui->LAssert(L, false, "DrawImageQuad() argument 1: expected image handle or nil, got %s", luaL_typename(L, 1));
+	}
 
 	r_shaderHnd_c* hnd = NULL;
 	glm::vec2 xys[4]{}, uvs[4]{};
@@ -1022,18 +1056,28 @@ static int l_DrawImageQuad(lua_State* L)
 	if (af & AF_XY) {
 		const float dpiScale = ui->renderer->VirtualScreenScaleFactor();
 		for (int i = k; i < k + 8; i++) {
-			ui->LAssert(L, lua_isnumber(L, i), "DrawImageQuad() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			int isNum;
+			lua_Number val = lua_tonumberx(L, i, &isNum);
+
+			if (!isNum) {
+				ui->LAssert(L, false, "DrawImageQuad() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			}
 			const int idx = i - k;
-			xys[idx / 2][idx % 2] = (float)lua_tonumber(L, i) * dpiScale;
+			xys[idx / 2][idx % 2] = (float)val * dpiScale;
 		}
 		k += 8;
 	}
 
 	if (af & AF_UV) {
 		for (int i = k; i < k + 8; i++) {
-			ui->LAssert(L, lua_isnumber(L, i), "DrawImageQuad() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			int isNum;
+			lua_Number val = lua_tonumberx(L, i, &isNum);
+
+			if (!isNum) {
+				ui->LAssert(L, false, "DrawImageQuad() argument %d: expected number, got %s", i, luaL_typename(L, i));
+			}
 			int idx = i - k;
-			uvs[idx / 2][idx % 2] = (float)lua_tonumber(L, i);
+			uvs[idx / 2][idx % 2] = (float)val;
 		}
 		k += 8;
 	}
@@ -1049,8 +1093,12 @@ static int l_DrawImageQuad(lua_State* L)
 		maxStackValue = hnd->StackCount();
 
 	if (af & AF_STACK) {
-		ui->LAssert(L, lua_isinteger(L, k), "DrawImageQuad() argument %d: expected integer, got %s", k, luaL_typename(L, k));
-		const int val = (int)lua_tointeger(L, k);
+		int isInt;
+		const int val = (int)lua_tointegerx(L, k, &isInt);
+
+		if (!isInt) {
+			 ui->LAssert(L, false, "DrawImageQuad() argument %d: expected integer, got %s", k, luaL_typename(L, k));
+		}
 		ui->LAssert(L, val > 0, "DrawImageQuad() argument %d: expected positive integer, got %d", k, val);
 		if (maxStackValue.has_value())
 			ui->LAssert(L, val <= *maxStackValue, "DrawImageQuad() argument %d: expected valid stack index <= %d, got %d", k, *maxStackValue, val);
@@ -1059,12 +1107,17 @@ static int l_DrawImageQuad(lua_State* L)
 	}
 
 	if (af & AF_MASK) {
-		ui->LAssert(L, lua_isnil(L, k) || lua_isinteger(L, k), "DrawImageQuad() argument %d: expected integer or nil, got %s", k, luaL_typename(L, k));
-		if (lua_isinteger(L, k)) {
-			const int val = (int)lua_tointeger(L, k);
+		if (!lua_isnil(L, k)) {
+			int isInt;
+			const int val = (int)lua_tointegerx(L, k, &isInt);
+
+			if (!isInt) {
+				ui->LAssert(L, false, "DrawImageQuad() argument %d: expected integer or nil, got %s", k, luaL_typename(L, k));
+			}
 			ui->LAssert(L, val > 0, "DrawImageQuad() argument %d: expected positive integer, got %d", k, val);
 			if (maxStackValue.has_value())
 				ui->LAssert(L, val <= *maxStackValue, "DrawImageQuad() argument %d: expected valid stack index <= %d, got %d", k, *maxStackValue, val);
+
 			maskLayer = val - 1;
 		}
 		k += 1;

@@ -260,6 +260,11 @@ if (WIN32)
         zstd::libzstd_shared
     )
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_include_directories(SimpleGraphic
+        PRIVATE
+        ${LUAJIT_INCLUDE_DIR}
+    )
+
     target_link_libraries(SimpleGraphic
         PUBLIC
         EGL

@@ -163,5 +163,5 @@ jobs:
         if: ${{ github.event_name == 'release' }}
         run: |
           cd build
-          tar -cvf SimpleGraphicSOs.tar *.dll
+          tar -cvf SimpleGraphicSOs.tar *.so
           gh release upload ${{ github.event.release.tag_name }} SimpleGraphicSOs.tar

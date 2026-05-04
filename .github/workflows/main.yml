@@ -127,7 +127,7 @@ jobs:
 
       - name: Append short commit sha to CFG_VERSION_NUM in config.h
         run: |
-          $file = 'config.h'
+          $file=config.h
           $short=$(git rev-parse --short HEAD)
           sed -i -E "s/(#define\s+CFG_VERSION_NUM\s+\"[^\"]*)(\")/\1-$short\2" $file
 

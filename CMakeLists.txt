@@ -282,6 +282,8 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
         zstd::libzstd_shared
         X11
     )
+
+    set_target_properties(SimpleGraphic PROPERTIES PREFIX "")
 endif ()
 
 install(FILES $<TARGET_RUNTIME_DLLS:SimpleGraphic> DESTINATION ".")

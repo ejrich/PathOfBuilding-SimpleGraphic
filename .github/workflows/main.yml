@@ -126,11 +126,10 @@ jobs:
           submodules: "recursive"
 
       - name: Append short commit sha to CFG_VERSION_NUM in config.h
-        shell: powershell
         run: |
           $file = 'config.h'
           $short=$(git rev-parse --short HEAD)
-          (Get-Content $file -Raw) -replace '(#define\s+CFG_VERSION_NUM\s+"[^"]*)(")', "`$1-$short`$2" | Set-Content $file
+          sed -i -E "s/(#define\s+CFG_VERSION_NUM\s+\"[^\"]*)(\")/\1-$short\2" $file
 
       - name: Obtain and run CMake
         uses: threeal/cmake-action@v1.3.0

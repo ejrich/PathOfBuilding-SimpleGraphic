@@ -127,7 +127,9 @@ jobs:
 
       - name: Append short commit sha to CFG_VERSION_NUM in config.h
         run: |
-          sed -i -E "s/(#define\s+CFG_VERSION_NUM\s+\"[^\"]*)(\")/\1-$(git rev-parse --short HEAD)\2" config.h
+          file=config.h
+          short=$(git rev-parse --short HEAD)
+          sed -i -E "s/(#define\s+CFG_VERSION_NUM\s+\"[^\"]*)(\")/\1-$short\2/" $file
 
       - name: Obtain and run CMake
         uses: threeal/cmake-action@v1.3.0

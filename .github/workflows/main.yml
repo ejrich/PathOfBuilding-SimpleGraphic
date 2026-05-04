@@ -125,6 +125,12 @@ jobs:
         with:
           submodules: "recursive"
 
+      - name: Get packages
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+            packages: libegl-dev libfmt-dev libglfw3-dev libglm-dev libluajit-dev libre2-dev libwebp-dev
+            version: 1.0
+
       - name: Append short commit sha to CFG_VERSION_NUM in config.h
         run: |
           file=config.h

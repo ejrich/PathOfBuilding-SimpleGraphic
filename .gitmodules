@@ -22,3 +22,6 @@
 [submodule "dep/gli"]
 	path = dep/gli
 	url = https://github.com/g-truc/gli.git
+[submodule "dep/sol2"]
+	path = dep/sol2
+	url = https://github.com/ThePhD/sol2.git

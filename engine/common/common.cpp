@@ -102,7 +102,7 @@ void textBuffer_c::IncSize()
 	memcpy(tmp, buf, len);
 	tmp[len] = 0;
 	delete buf;
-	buf = tmp;	
+	buf = tmp;
 }
 
 void textBuffer_c::DecSize()
@@ -185,7 +185,7 @@ bool textBuffer_c::KeyEvent(int key, int type)
 // ==============
 
 // Color escape table
-static const float* colorEscape[10] = { 
+static const float* colorEscape[10] = {
 	colorBlack,		// ^0
 	colorRed,		// ^1
 	colorGreen,		// ^2
@@ -437,6 +437,8 @@ char* NarrowUTF8String(const wchar_t* str)
 	return NarrowCodepageString(str, CP_UTF8);
 }
 
+#endif
+
 IndexedUTF32String IndexUTF8ToUTF32(std::string_view input)
 {
 	IndexedUTF32String ret{};
@@ -500,5 +502,3 @@ IndexedUTF32String IndexUTF8ToUTF32(std::string_view input)
 	ret.text = std::u32string(codepoints.begin(), codepoints.end());
 	return ret;
 }
-
-#endif

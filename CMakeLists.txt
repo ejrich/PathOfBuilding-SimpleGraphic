@@ -318,13 +318,13 @@ if (WIN32)
 endif ()
 
 
-if (WIN32)
 # lcurl module
 
-    set(LCURL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/Lua-cURLv3)
-    file(GLOB LCURL_SOURCES ${LCURL_SOURCE_DIR}/src/**.c)
-    add_library(lcurl SHARED ${LCURL_SOURCES})
+set(LCURL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs/Lua-cURLv3)
+file(GLOB LCURL_SOURCES ${LCURL_SOURCE_DIR}/src/**.c)
+add_library(lcurl SHARED ${LCURL_SOURCES})
 
+if (WIN32)
     target_include_directories(lcurl
         PRIVATE
         ${LCURL_SOURCE_DIR}/src
@@ -335,14 +335,30 @@ if (WIN32)
         CURL::libcurl
         LuaJIT::LuaJIT
     )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_include_directories(lcurl
+        PRIVATE
+        ${LCURL_SOURCE_DIR}/src
+        ${LUAJIT_INCLUDE_DIR}
+    )
 
-    install(TARGETS lcurl RUNTIME DESTINATION ".")
-    install(FILES $<TARGET_RUNTIME_DLLS:lcurl> DESTINATION ".")
+    target_link_libraries(lcurl
+        PRIVATE
+        curl
+        luajit-5.1
+    )
+
+    set_target_properties(lcurl PROPERTIES PREFIX "")
+endif ()
+
+install(TARGETS lcurl RUNTIME DESTINATION ".")
+install(FILES $<TARGET_RUNTIME_DLLS:lcurl> DESTINATION ".")
 
 # luautf8 module
 
-    add_library(lua-utf8 SHARED libs/luautf8/lutf8lib.c)
+add_library(lua-utf8 SHARED libs/luautf8/lutf8lib.c)
 
+if (WIN32)
     target_compile_definitions(lua-utf8
         PRIVATE
         LUA_BUILD_AS_DLL
@@ -356,28 +372,48 @@ if (WIN32)
         PRIVATE
         LuaJIT::LuaJIT
     )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_include_directories(lua-utf8
+        PRIVATE
+        ${LUAJIT_INCLUDE_DIR}
+    )
 
-    install(TARGETS lua-utf8 RUNTIME DESTINATION ".")
-    install(FILES $<TARGET_RUNTIME_DLLS:lua-utf8> DESTINATION ".")
+    target_link_libraries(lua-utf8
+        PRIVATE
+        luajit-5.1
+    )
+
+    set_target_properties(lua-utf8 PROPERTIES PREFIX "")
+endif ()
+
+install(TARGETS lua-utf8 RUNTIME DESTINATION ".")
+install(FILES $<TARGET_RUNTIME_DLLS:lua-utf8> DESTINATION ".")
 
 # luasocket module
 
-    add_library(luasocket SHARED
-       "libs/luasocket/src/auxiliar.c"
-       "libs/luasocket/src/buffer.c"
-       "libs/luasocket/src/compat.c"
-       "libs/luasocket/src/except.c"
-       "libs/luasocket/src/inet.c"
-       "libs/luasocket/src/io.c"
-       "libs/luasocket/src/luasocket.c"
-       "libs/luasocket/src/options.c"
-       "libs/luasocket/src/select.c"
-       "libs/luasocket/src/tcp.c"
-       "libs/luasocket/src/timeout.c"
-       "libs/luasocket/src/udp.c"
-       "libs/luasocket/src/wsocket.c"
-    )
+if (WIN32)
+    set(SOCKET_IMPLEMENTATION "libs/luasocket/src/wsocket.c")
+else ()
+    set(SOCKET_IMPLEMENTATION "libs/luasocket/src/usocket.c")
+endif ()
 
+add_library(luasocket SHARED
+   "libs/luasocket/src/auxiliar.c"
+   "libs/luasocket/src/buffer.c"
+   "libs/luasocket/src/compat.c"
+   "libs/luasocket/src/except.c"
+   "libs/luasocket/src/inet.c"
+   "libs/luasocket/src/io.c"
+   "libs/luasocket/src/luasocket.c"
+   "libs/luasocket/src/options.c"
+   "libs/luasocket/src/select.c"
+   "libs/luasocket/src/tcp.c"
+   "libs/luasocket/src/timeout.c"
+   "libs/luasocket/src/udp.c"
+   ${SOCKET_IMPLEMENTATION}
+)
+
+if (WIN32)
     target_include_directories(luasocket
         PRIVATE
         ${LSOCKET_SOURCE_DIR}/src
@@ -389,15 +425,30 @@ if (WIN32)
         wsock32
         ws2_32
     )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_include_directories(luasocket
+        PRIVATE
+        ${LSOCKET_SOURCE_DIR}/src
+        ${LUAJIT_INCLUDE_DIR}
+    )
 
-    set_target_properties( luasocket PROPERTIES OUTPUT_NAME "socket" )
-    install(TARGETS luasocket RUNTIME DESTINATION ".")
-    install(FILES $<TARGET_RUNTIME_DLLS:luasocket> DESTINATION ".")
+    target_link_libraries(luasocket
+        PRIVATE
+        luajit-5.1
+    )
+
+    set_target_properties(luasocket PROPERTIES PREFIX "")
+endif ()
+
+set_target_properties( luasocket PROPERTIES OUTPUT_NAME "socket" )
+install(TARGETS luasocket RUNTIME DESTINATION ".")
+install(FILES $<TARGET_RUNTIME_DLLS:luasocket> DESTINATION ".")
 
 # lzip module
 
-    add_library(lzip SHARED libs/LZip/lzip.cpp)
+add_library(lzip SHARED libs/LZip/lzip.cpp)
 
+if (WIN32)
     target_include_directories(lzip
         PRIVATE
     )
@@ -407,7 +458,20 @@ if (WIN32)
         LuaJIT::LuaJIT
         ZLIB::ZLIB
     )
+elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_include_directories(lzip
+        PRIVATE
+        ${LUAJIT_INCLUDE_DIR}
+    )
 
-    install(TARGETS lzip RUNTIME DESTINATION ".")
-    install(FILES $<TARGET_RUNTIME_DLLS:lzip> DESTINATION ".")
+    target_link_libraries(lzip
+        PRIVATE
+        luajit-5.1
+        ZLIB::ZLIB
+    )
+
+    set_target_properties(lzip PROPERTIES PREFIX "")
 endif ()
+
+install(TARGETS lzip RUNTIME DESTINATION ".")
+install(FILES $<TARGET_RUNTIME_DLLS:lzip> DESTINATION ".")

@@ -263,6 +263,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_include_directories(SimpleGraphic
         PRIVATE
         ${LUAJIT_INCLUDE_DIR}
+        dep/gli
     )
 
     target_link_libraries(SimpleGraphic

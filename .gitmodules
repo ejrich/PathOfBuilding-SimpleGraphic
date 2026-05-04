@@ -19,3 +19,6 @@
 [submodule "dep/compressonator"]
 	path = dep/compressonator
 	url = https://github.com/GPUOpen-Tools/compressonator
+[submodule "dep/gli"]
+	path = dep/gli
+	url = https://github.com/g-truc/gli.git

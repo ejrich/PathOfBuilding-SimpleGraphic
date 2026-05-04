@@ -128,7 +128,7 @@ jobs:
       - name: Get packages
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-            packages: libegl-dev libfmt-dev libglfw3-dev libglm-dev libluajit-5.1-dev libmsgsl-dev libre2-dev libwebp-dev
+            packages: libegl-dev libfmt-dev libglfw3-dev libglm-dev libluajit-5.1-dev libmsgsl-dev libre2-dev libwebp-dev uuid-dev
             version: 1.0
 
       - name: Append short commit sha to CFG_VERSION_NUM in config.h

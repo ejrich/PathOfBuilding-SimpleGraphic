@@ -120,7 +120,7 @@ sys_video_c::sys_video_c(sys_IMain* sysHnd)
     else // Native Windows
         platformType = GLFW_ANGLE_PLATFORM_TYPE_D3D11;
 #elif __linux__
-    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 #endif
     glfwInitHint(GLFW_ANGLE_PLATFORM_TYPE, platformType);
     glfwInit();

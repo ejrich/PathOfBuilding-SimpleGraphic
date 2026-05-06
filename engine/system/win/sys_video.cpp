@@ -12,6 +12,31 @@
 
 #include <GLFW/glfw3.h>
 
+// Versions of glfw <3.4 won't have these defined
+#ifndef GLFW_ANGLE_PLATFORM_TYPE
+#define GLFW_ANGLE_PLATFORM_TYPE        0x00050002
+#endif
+
+#ifndef GLFW_ANGLE_PLATFORM_TYPE_NONE
+#define GLFW_ANGLE_PLATFORM_TYPE_NONE   0x00037001
+#endif
+
+#ifndef GLFW_ANGLE_PLATFORM_TYPE_OPENGL
+#define GLFW_ANGLE_PLATFORM_TYPE_OPENGL 0x00037002
+#endif
+
+#ifndef GLFW_ANGLE_PLATFORM_TYPE_D3D11
+#define GLFW_ANGLE_PLATFORM_TYPE_D3D11  0x00037005
+#endif
+
+#ifndef GLFW_PLATFORM
+#define GLFW_PLATFORM                   0x00050003
+#endif
+
+#ifndef GLFW_PLATFORM_X11
+#define GLFW_PLATFORM_X11               0x00060004
+#endif
+
 #include <deque>
 #include <map>
 #include <optional>

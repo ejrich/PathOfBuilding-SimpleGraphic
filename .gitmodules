@@ -25,3 +25,9 @@
 [submodule "dep/sol2"]
 	path = dep/sol2
 	url = https://github.com/ThePhD/sol2.git
+[submodule "dep/fmt"]
+	path = dep/fmt
+	url = https://github.com/fmtlib/fmt.git
+[submodule "dep/re2"]
+	path = dep/re2
+	url = https://github.com/google/re2.git

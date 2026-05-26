@@ -240,6 +240,73 @@ if (APPLE)
     )
 endif ()
 
+set(BUILD_SHARED_LIBS ON)
+add_subdirectory(dep/fmt)
+
+set(RE2_SOURCES
+    dep/re2/re2/bitmap256.cc
+    dep/re2/re2/bitstate.cc
+    dep/re2/re2/compile.cc
+    dep/re2/re2/dfa.cc
+    dep/re2/re2/filtered_re2.cc
+    dep/re2/re2/mimics_pcre.cc
+    dep/re2/re2/nfa.cc
+    dep/re2/re2/onepass.cc
+    dep/re2/re2/parse.cc
+    dep/re2/re2/perl_groups.cc
+    dep/re2/re2/prefilter.cc
+    dep/re2/re2/prefilter_tree.cc
+    dep/re2/re2/prog.cc
+    dep/re2/re2/re2.cc
+    dep/re2/re2/regexp.cc
+    dep/re2/re2/set.cc
+    dep/re2/re2/simplify.cc
+    dep/re2/re2/tostring.cc
+    dep/re2/re2/unicode_casefold.cc
+    dep/re2/re2/unicode_groups.cc
+    dep/re2/util/rune.cc
+    dep/re2/util/strutil.cc
+    )
+
+add_library(re2 SHARED ${RE2_SOURCES})
+target_include_directories(re2 PRIVATE dep/re2)
+target_link_libraries(re2 PUBLIC Threads::Threads)
+
+set(ABSL_DEPS
+    absl_absl_check
+    absl_absl_log
+    absl_base
+    absl_core_headers
+    absl_fixed_array
+    absl_flags
+    absl_flat_hash_map
+    absl_flat_hash_set
+    absl_hash
+    absl_inlined_vector
+    absl_optional
+    absl_span
+    absl_str_format
+    absl_strings
+    absl_synchronization
+    )
+
+if(NOT TARGET absl::base)
+    find_package(absl REQUIRED)
+endif()
+list(APPEND REQUIRES ${ABSL_DEPS})
+
+foreach(dep ${ABSL_DEPS})
+    # Work around https://gitlab.kitware.com/cmake/cmake/-/issues/16899. >:(
+    string(PREPEND dep "^")
+    string(REGEX REPLACE "\\^absl_" "absl::" dep ${dep})
+    target_link_libraries(re2 PUBLIC ${dep})
+endforeach()
+
+add_library(re2::re2 ALIAS re2)
+
+install(TARGETS re2 RUNTIME DESTINATION ".")
+install(FILES $<TARGET_RUNTIME_DLLS:re2> DESTINATION ".")
+
 if (WIN32)
     target_link_libraries(SimpleGraphic
         PRIVATE
@@ -263,7 +330,9 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_include_directories(SimpleGraphic
         PRIVATE
         ${LUAJIT_INCLUDE_DIR}
+        dep/fmt/include
         dep/gli
+        dep/re2
         dep/sol2/include
     )
 
@@ -272,12 +341,12 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
         EGL
         GLESv2
         cmp_core
-        fmt
+        fmt::fmt
         glfw
         glm::glm
         imgui
         luajit-5.1
-        re2
+        re2::re2
         Threads::Threads
         WebP::webpdecoder
         ZLIB::ZLIB

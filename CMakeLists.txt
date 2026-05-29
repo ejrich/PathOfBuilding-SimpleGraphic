@@ -240,10 +240,21 @@ if (APPLE)
     )
 endif ()
 
-set(BUILD_SHARED_LIBS ON)
-add_subdirectory(dep/fmt)
+add_library(fmt SHARED
+    dep/fmt/src/fmt.cc
+    dep/fmt/src/format.cc
+    )
 
-set(RE2_SOURCES
+target_sources(fmt PRIVATE dep/fmt/src/os.cc)
+
+target_compile_features(fmt PUBLIC cxx_std_20)
+if (CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(fmt PUBLIC -fmodules)
+endif ()
+
+add_library(fmt::fmt ALIAS fmt)
+
+add_library(re2 SHARED
     dep/re2/re2/bitmap256.cc
     dep/re2/re2/bitstate.cc
     dep/re2/re2/compile.cc
@@ -268,7 +279,6 @@ set(RE2_SOURCES
     dep/re2/util/strutil.cc
     )
 
-add_library(re2 SHARED ${RE2_SOURCES})
 target_include_directories(re2 PRIVATE dep/re2)
 target_link_libraries(re2 PUBLIC Threads::Threads)
 

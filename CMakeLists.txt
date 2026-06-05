@@ -264,7 +264,10 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
 
     set(BUILD_SHARED_LIBS ON)
     add_subdirectory(dep/fmt)
+    set_target_properties(fmt PROPERTIES NO_SONAME TRUE)
+
     add_subdirectory(dep/re2)
+    set_target_properties(re2 PROPERTIES NO_SONAME TRUE)
 
     target_include_directories(SimpleGraphic
         PRIVATE
@@ -293,7 +296,10 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
         X11
     )
 
-    set_target_properties(SimpleGraphic PROPERTIES PREFIX "")
+    set_target_properties(SimpleGraphic PROPERTIES
+        PREFIX ""
+        BUILD_RPATH_USE_ORIGIN TRUE
+        )
 endif ()
 
 install(FILES $<TARGET_RUNTIME_DLLS:SimpleGraphic> DESTINATION ".")

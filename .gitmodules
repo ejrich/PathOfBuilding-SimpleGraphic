@@ -31,3 +31,6 @@
 [submodule "dep/re2"]
 	path = dep/re2
 	url = https://github.com/google/re2.git
+[submodule "dep/abseil-cpp"]
+	path = dep/abseil-cpp
+	url = https://github.com/abseil/abseil-cpp.git

@@ -260,14 +260,14 @@ if (WIN32)
         zstd::libzstd_shared
     )
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-    set(BUILD_SHARED_LIBS ON)
-    add_subdirectory(dep/fmt)
-    set_target_properties(fmt PROPERTIES NO_SONAME TRUE)
+    add_subdirectory(dep/abseil-cpp)
 
+    set(RE2_INSTALL OFF)
     add_subdirectory(dep/re2)
-    set_target_properties(re2 PROPERTIES NO_SONAME TRUE)
+
+    add_subdirectory(dep/fmt)
 
     target_include_directories(SimpleGraphic
         PRIVATE

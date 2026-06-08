@@ -1643,7 +1643,7 @@ void r_renderer_c::GetShaderImageSize(r_shaderHnd_c* hnd, int& width, int& heigh
 #if _WIN32
 			Sleep(1);
 #elif __linux__
-			sleep(1);
+			usleep(1000);
 #endif
 		}
 		width = hnd->sh->tex->fileWidth;

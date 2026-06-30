@@ -431,18 +431,41 @@ void sys_main_c::SpawnProcess(std::filesystem::path cmdName, const char* argList
 #elif __linux__
     int pid = fork();
     if (pid == 0) {
-        std::vector<char*> args;
-        if (argList) {
-            std::istringstream argStream(argList);
-            std::string arg;
-            while (std::getline(argStream, arg, ' ')) {
-                if (arg.length()) {
-                    args.push_back((char*)arg.c_str());
+        std::vector<std::string> commandLine;
+        commandLine.push_back(cmdName.string());
+        if (argList)
+        {
+            auto start = argList;
+            int length = 0;
+
+            for (int i = 0; argList[i]; i++) {
+                if (argList[i] == ' ') {
+                    if (length) {
+                        std::string arg(start, length);
+                        commandLine.push_back(arg);
+                    }
+
+                    start = argList + i + 1;
+                    length = 0;
                 }
+                else {
+                    length++;
+                }
+            }
+
+            if (length) {
+                std::string arg(start, length);
+                commandLine.push_back(arg);
             }
         }
 
-        execvp(cmdName.string().c_str(), args.data());
+        char* args[commandLine.size() + 1];
+        for (int i = 0; i < commandLine.size(); i++) {
+            args[i] = commandLine[i].data();
+        }
+        args[commandLine.size()] = 0;
+
+        execvp(args[0], args);
         exit(-1);
     }
 #else
